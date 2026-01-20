@@ -1,0 +1,12 @@
+requests
+tqdm
+pyyaml
+psutil
+capstone
+sympy
+numpy
+scapy
+pandas
+matplotlib
+scipy
+setuptools
