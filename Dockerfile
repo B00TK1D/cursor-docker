@@ -36,7 +36,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y \
     gettext \
     universal-ctags \
     ripgrep \
-    fd-find
+    fd-find \
+    supervisor
 
 
 # Install golang
@@ -53,7 +54,8 @@ RUN npm install -g typescript
 RUN curl https://cursor.com/install -fsS | bash
 
 RUN mkdir -p /root/.cursor/projects/working && \
-    echo '{"trustedAt": "2026-01-20T04:43:49.587Z","workspacePath": "/working"}' > /root/.cursor/projects/working/.workspace-trusted
+    echo '{"trustedAt": "2026-01-20T04:43:49.587Z","workspacePath": "/working"}' > /root/.cursor/projects/working/.workspace-trusted && \
+    echo '["mitmproxy-7582d3a2d75e1a5b"]' > /root/.cursor/projects/working/mcp-approvals.json
 
 #COPY 6680.index.js.patch /root/.local/share/cursor-agent/6680.index.js.patch
 #RUN cp /root/.local/share/cursor-agent/6680.index.js.patch $(find /root/.local/share/cursor-agent/versions -name '6680.index.js' -type f | head -n 1) && rm /root/.local/share/cursor-agent/6680.index.js.patch
@@ -81,6 +83,21 @@ RUN pip3 config set global.break-system-packages true
 # Clean up home directory
 RUN rm -rf /root/*.tar.gz && \
     mkdir /logs
+
+# Set up mitmproxy directories
+RUN mkdir -p /var/mitmproxy/traffic && \
+    mkdir -p /root/.mitmproxy && \
+    mkdir -p /opt/mitmproxy
+
+# Copy mitmproxy addon and MCP server
+COPY ./mitmproxy_addon.py /opt/mitmproxy/mitmproxy_addon.py
+COPY ./mcp_proxy_server.py /opt/mitmproxy/mcp_proxy_server.py
+COPY ./mcp.json /root/.cursor/mcp.json
+RUN chmod +x /opt/mitmproxy/mcp_proxy_server.py
+
+COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+EXPOSE 8888
 
 WORKDIR /working
 
