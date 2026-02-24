@@ -37,7 +37,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y \
     universal-ctags \
     ripgrep \
     fd-find \
-    supervisor
+    supervisor \
+    ca-certificates \
+    lsb-release \
+    iptables
 
 
 # Install golang
@@ -49,6 +52,12 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
 
 # Install typescript
 RUN npm install -g typescript
+
+# Install docker client
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null && \
+    apt update && apt install -y docker-ce-cli
 
 # Install cursor CLI
 RUN curl https://cursor.com/install -fsS | bash
@@ -100,6 +109,8 @@ COPY ./supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 EXPOSE 8888
 
 WORKDIR /working
+
+COPY ./rules /root/.cursor/rules
 
 COPY ./entrypoint.sh /entrypoint.sh
 
